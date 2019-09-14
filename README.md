@@ -5,9 +5,9 @@ While most UI elements are scalable by default, the Map icons and ther labels (t
 Comparison Image (at 4k resolution):  
 ![](https://i.imgur.com/rf7YPdg.jpg)  
 
-This add on is still in early development so some things might appear offset or incorrectly scaled. It's also my first add on for KSP, so please feel free to leave feedback so i can improve it.
+This add on is still in early development so some things might appear offset or incorrectly scaled. It's also my first add on for KSP, so please feel free to leave feedback or <a href="https://git.srv.hoerberg.de/tom300z/4ksp/issues">report an issue</a> so i can improve it.
 <center>
-<h4>Downloads:</h4>
+<h4>Downloads</h4>
 <a href="https://github.com/KSP-CKAN/CKAN/releases" target="_blank">CKAN</a><br/>
 <a href="https://spacedock.info/mod/2228/4kSP%20-%20Scaled%20map%20icons%20and%20text" target="_blank">Spacedock</a><br/>
 <a href="" target="_blank">Gitlab</a>
