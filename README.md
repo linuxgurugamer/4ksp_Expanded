@@ -1,3 +1,5 @@
+Note:  The original repo for this is: https://git.srv.hoerberg.de/tom300z/4ksp
+
 <center><h2>4kSP 0.1</h2></center>
 
 While most UI elements are scalable by default, the Map icons and ther labels (the orbit apoapsis for example) are not, that makes the game almost unplayable at high resolutions. This Mod scales those things using the stock UI Scale setting.  
