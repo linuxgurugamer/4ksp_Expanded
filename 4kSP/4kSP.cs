@@ -106,12 +106,15 @@ namespace FourkSP
                 RevertToSaved();
         }
 
-        void RevertToSaved()
+        void RevertToSaved(bool all=false)
         {
             HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_IconSize = tmpUI_Scale;
             HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_IconSize = tmpIconSize;
             HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_FontSize = tmpFontSize;
-            HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale = tmpUseStock;
+            if (!all)
+                HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale = tmpUseStock;
+            nextActionTime = 0;
+            UpdateSizes();
         }
 
         void OnGUI()
@@ -137,10 +140,14 @@ namespace FourkSP
         }
         void drawWindow(int id)
         {
-            HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale =
-                GUILayout.Toggle(HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale, "Use the stock UI Scale for all");
-            if (!HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale && tmpUseStock)
-                RevertToSaved();
+            bool b =       GUILayout.Toggle(HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale, "Use the stock UI Scale for all");
+            if (b!= HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale)
+            {
+                HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale = b;
+                UpdateSizes();
+                nextActionTime = 0;
+            }
+;
             GUI.enabled = !HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale;
             DrawSlider("Overall UI Scale: ", ref HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_Scale, MinScale, MaxScale);
             DrawSlider("Icon Size: ", ref HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_IconSize, MinIconSize, MaxIconSize);

@@ -2,6 +2,7 @@ Changelog
 
 0.2.1.1
 	Fixed buttons being greyed out if stock settings are selected
+	Improved update of sizes if changing between stock and mod settings
 
 0.2.1
 	Added toggle to window re. use stock or not	
