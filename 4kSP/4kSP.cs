@@ -145,7 +145,7 @@ namespace FourkSP
             DrawSlider("Overall UI Scale: ", ref HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_Scale, MinScale, MaxScale);
             DrawSlider("Icon Size: ", ref HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_IconSize, MinIconSize, MaxIconSize);
             DrawSlider("Font Size: ", ref HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_FontSize, MinFontSize, MaxFontSize);
-
+            GUI.enabled = true;
             GUILayout.BeginHorizontal();
 
             if (GUILayout.Button("Accept"))
