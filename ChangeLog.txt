@@ -1,6 +1,9 @@
 Changelog
 
-0.1.1
+0.2.1
+	Added toggle to window re. use stock or not	
+
+0.2.0
 	Adoption by Linuxgurugamer
 	Added check for a planetarium, to avoid running during the Editor, Astronaut complex (?), MissionControl, etc
 	Added Settings page

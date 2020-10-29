@@ -35,6 +35,7 @@ namespace FourkSP
         int baseWindowID;
 
         float tmpUI_Scale, tmpFontSize, tmpIconSize;
+        bool tmpUseStock;
 
         void Start()
         {
@@ -99,6 +100,7 @@ namespace FourkSP
                 tmpUI_Scale = HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_IconSize;
                 tmpIconSize = HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_IconSize;
                 tmpFontSize = HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_FontSize;
+                tmpUseStock = HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale;
             }
             else
                 RevertToSaved();
@@ -109,6 +111,7 @@ namespace FourkSP
             HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_IconSize = tmpUI_Scale;
             HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_IconSize = tmpIconSize;
             HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_FontSize = tmpFontSize;
+            HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale = tmpUseStock;
         }
 
         void OnGUI()
@@ -134,6 +137,11 @@ namespace FourkSP
         }
         void drawWindow(int id)
         {
+            HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale =
+                GUILayout.Toggle(HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale, "Use the stock UI Scale for all");
+            if (!HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale && tmpUseStock)
+                RevertToSaved();
+            GUI.enabled = !HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale;
             DrawSlider("Overall UI Scale: ", ref HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_Scale, MinScale, MaxScale);
             DrawSlider("Icon Size: ", ref HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_IconSize, MinIconSize, MaxIconSize);
             DrawSlider("Font Size: ", ref HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_FontSize, MinFontSize, MaxFontSize);
