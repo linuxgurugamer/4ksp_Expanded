@@ -1,0 +1,14 @@
+Changelog
+
+0.1.1
+	Adoption by Linuxgurugamer
+	Added check for a planetarium, to avoid running during the Editor, Astronaut complex (?), MissionControl, etc
+	Added Settings page
+		Specify alternate UI Scale for map entries
+		Specify alternate Fontsize for map entries
+	Added window to do dynamic real-time resizing
+
+0.1b
+	Added License.txt
+0.1
+	Original release
