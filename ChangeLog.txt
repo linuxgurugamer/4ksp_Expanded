@@ -1,5 +1,8 @@
 Changelog
 
+0.2.1.2
+	Renamed DLL for better CKAN compatibility
+
 0.2.1.1
 	Fixed buttons being greyed out if stock settings are selected
 	Improved update of sizes if changing between stock and mod settings
