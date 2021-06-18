@@ -9,7 +9,17 @@ using ClickThroughFix;
 
 namespace FourkSP
 {
-    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
+    [KSPAddon(KSPAddon.Startup.Flight, false)]
+    public class FourkSP_FlightL : FourkSP
+    {
+
+    }
+
+    [KSPAddon(KSPAddon.Startup.TrackingStation, false)]
+    public class FourkSP_TrackingStation : FourkSP
+    {
+
+    }
     public class FourkSP : MonoBehaviour
     {
         internal const float MinIconSize = 0.75f;
@@ -39,13 +49,10 @@ namespace FourkSP
 
         void Start()
         {
-            if (!HighLogic.LoadedSceneHasPlanetarium) return;
-
             UpdateSizes();
             GameEvents.OnGameSettingsApplied.Add(OnGameSettingsApplied);
             AddToolbarButton();
             baseWindowID = UnityEngine.Random.Range(1000, 2000000) + _AssemblyName.GetHashCode();
-
         }
 
         void OnGameSettingsApplied()
@@ -55,20 +62,10 @@ namespace FourkSP
 
         void OnDestroy()
         {
-            if (!HighLogic.LoadedSceneHasPlanetarium) return;
-
             GameEvents.OnGameSettingsApplied.Remove(OnGameSettingsApplied);
-
-            if (toolbarControl != null)
-            {
-                toolbarControl.OnDestroy();
-                GameObject.Destroy(toolbarControl);
-                toolbarControl = null;
-            }
-
         }
 
-        ToolbarControl toolbarControl;
+        static ToolbarControl toolbarControl;
         internal const string MODID = "4kSP";
         internal const string MODNAME = "4kSP";
         private bool windowShown = false;
@@ -106,7 +103,7 @@ namespace FourkSP
                 RevertToSaved();
         }
 
-        void RevertToSaved(bool all=false)
+        void RevertToSaved(bool all = false)
         {
             HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_IconSize = tmpUI_Scale;
             HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_IconSize = tmpIconSize;
@@ -119,15 +116,17 @@ namespace FourkSP
 
         void OnGUI()
         {
-            GUI.skin = HighLogic.Skin;
             if (windowShown)
+            {
+                GUI.skin = HighLogic.Skin;
                 windowPosition = ClickThruBlocker.GUILayoutWindow(baseWindowID, windowPosition, drawWindow, "4kSP");
+            }
         }
 
         void DrawSlider(string label, ref float data, float min, float max)
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label(label+" (" + data.ToString("F2") + ")", GUILayout.Width(170));
+            GUILayout.Label(label + " (" + data.ToString("F2") + ")", GUILayout.Width(170));
             float newData = GUILayout.HorizontalSlider(data, min, max, GUILayout.Width(200));
             if (newData != data)
             {
@@ -136,18 +135,18 @@ namespace FourkSP
                 nextActionTime = 0;
             }
             GUILayout.EndHorizontal();
-
         }
+
         void drawWindow(int id)
         {
-            bool b =       GUILayout.Toggle(HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale, "Use the stock UI Scale for all");
-            if (b!= HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale)
+            bool b = GUILayout.Toggle(HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale, "Use the stock UI Scale for all");
+            if (b != HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale)
             {
                 HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale = b;
                 UpdateSizes();
                 nextActionTime = 0;
             }
-;
+
             GUI.enabled = !HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale;
             DrawSlider("Overall UI Scale: ", ref HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_Scale, MinScale, MaxScale);
             DrawSlider("Icon Size: ", ref HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().UI_IconSize, MinIconSize, MaxIconSize);
@@ -168,6 +167,7 @@ namespace FourkSP
             GUILayout.Label("Click <B>Accept</b> to save");
             GUI.DragWindow();
         }
+
         public void UpdateSizes()
         {
             if (HighLogic.CurrentGame.Parameters.CustomParams<_4kSP>().useStockUIScale)
@@ -185,7 +185,7 @@ namespace FourkSP
 
         public void Update()
         {
-            if (!HighLogic.LoadedSceneHasPlanetarium) return;
+            //if (!HighLogic.LoadedSceneHasPlanetarium) return;
             if (!scaledNodes.SequenceEqual(MapNode.AllMapNodes) && MapView.MapIsEnabled)
             {
                 UpdateNodes();
@@ -214,6 +214,7 @@ namespace FourkSP
             }
         }
 
+#if false
         public void LogTree(Transform transform, int lvl = 0)
         {
             if (lvl == 0)
@@ -230,5 +231,6 @@ namespace FourkSP
                 }
             }
         }
+#endif
     }
 }
