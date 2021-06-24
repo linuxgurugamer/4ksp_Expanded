@@ -1,5 +1,8 @@
 Changelog
 
+0.2.1.5
+	Updated URLs in version file
+
 0.2.1.4
 	Fixed toolbar button to display in mapview, not flight mode
 

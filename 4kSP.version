@@ -1,12 +1,12 @@
 {
   "NAME": "4kSP",
-  "URL": "https://raw.githubusercontent.com/linuxgurugamer/4kSP/master/4kSP.version",
-  "DOWNLOAD": "https://github.com/linuxgurugamer/4kSP/releases",
+  "URL": "https://raw.githubusercontent.com/linuxgurugamer/4ksp_Expanded/master/4kSP.version",
+  "DOWNLOAD": "https://github.com/linuxgurugamer/4ksp_Expanded/releases",
   "VERSION": {
     "MAJOR": 0,
     "MINOR": 2,
     "PATCH": 1,
-    "BUILD": 4
+    "BUILD": 5
   },
   "KSP_VERSION": {
     "MAJOR": 1,
