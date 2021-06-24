@@ -79,7 +79,7 @@ namespace FourkSP
                 GameObject gameObject = new GameObject();
                 toolbarControl = gameObject.AddComponent<ToolbarControl>();
                 toolbarControl.AddToAllToolbars(windowToggle, windowToggle,
-                    ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.TRACKSTATION,
+                    ApplicationLauncher.AppScenes.MAPVIEW | ApplicationLauncher.AppScenes.TRACKSTATION,
                     MODID,
                     "4kSPBtn",
                     "4kSP/PluginData/4kSP-38",

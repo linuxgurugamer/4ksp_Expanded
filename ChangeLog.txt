@@ -1,5 +1,8 @@
 Changelog
 
+0.2.1.4
+	Fixed toolbar button to display in mapview, not flight mode
+
 0.2.1.3
 	Minor performance improvements
 	Removed some unneeded code
