@@ -1,5 +1,8 @@
 Changelog
 
+0.1.2.7 (unreleased)
+	version file update
+
 0.2.1.6
 	Added AssemblyFileVersion
 	Updated version file
