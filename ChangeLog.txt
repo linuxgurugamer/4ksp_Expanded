@@ -1,6 +1,6 @@
 Changelog
 
-0.1.2.7 (unreleased)
+0.1.2.7
 	version file update
 
 0.2.1.6
