@@ -1,5 +1,8 @@
 Changelog
 
+0.1.2.8
+	Updated README
+
 0.1.2.7
 	version file update
 

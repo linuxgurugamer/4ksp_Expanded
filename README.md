@@ -19,3 +19,32 @@ This add on is still in early development so some things might appear offset or 
 <h4>License & Source</h4>
 This add on is available under the <a href="https://git.srv.hoerberg.de/tom300z/4ksp/blob/master/LICENSE">MIT License</a> and the source code is available on <a href="https://git.srv.hoerberg.de/tom300z/4ksp">Gitlab</a>.
 </center>
+
+
+
+Originally written by @tom300z, original thread is here: https://forum.kerbalspaceprogram.com/index.php?/topic/188213-17x-4ksp-scaled-map-icons-and-text/
+
+I needed to have an alternate size from the stock UI_SCALE, so I've taken this and expanded it by adding a window to dynamically scale the map icons and text.
+
+https://i.imgur.com/rf7YPdg.jpg
+
+ 
+
+There is a new button when in flight scene: https://i.imgur.com/ORofiqJ.png
+
+Clicking it will open the following window in which you can adjust the sizes while on the map screen.:
+
+https://i.imgur.com/EEhimaT.png
+
+
+Availability
+
+Source: https://github.com/linuxgurugamer/4ksp_Expanded
+Download: https://spacedock.info/mod/2554/
+License: MIT
+Available via CKAN
+
+Dependencies
+
+Click Through Blocker
+ToolbarController
