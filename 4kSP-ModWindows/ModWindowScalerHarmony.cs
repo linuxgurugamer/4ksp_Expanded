@@ -1,7 +1,7 @@
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using HarmonyLib;
 using UnityEngine;
 
 namespace _4kSP_ModWindows
@@ -14,19 +14,19 @@ namespace _4kSP_ModWindows
     {
         private const string HARMONY_ID = "com.fourksp.modwindowscaler";
         private const string TAG = "[4kSP-ModWindows/Harmony]";
-        private static bool _patched;
+        public static bool harmonyLoaded = false;
 
         void Start()
         {
             try { _4kSP_RnD.ModWindowScalerConfig.Load(); }
             catch (Exception e) { Debug.LogError(TAG + " Load err: " + e); }
 
-            if (_patched) return;
+            if (harmonyLoaded) return;
             try
             {
                 Harmony h = new Harmony(HARMONY_ID);
                 h.PatchAll(typeof(ModWindowScalerHarmonyBootstrap).Assembly);
-                _patched = true;
+                harmonyLoaded = true;
             }
             catch (Exception e)
             {
@@ -104,6 +104,8 @@ namespace _4kSP_ModWindows
                     return;
 
                 float s = _4kSP_RnD.ModWindowScalerConfig.ScaleFor(asm);
+
+                _4kSP_RnD.ModWindowScalerConfig.TrackWindow(asm, s);
 
                 if (_4kSP_RnD.ModWindowScalerConfig.LogWindows && loggedAssemblies.Add(asm))
                     Debug.Log("[4kSP-ModWindows] window from assembly '" + asm

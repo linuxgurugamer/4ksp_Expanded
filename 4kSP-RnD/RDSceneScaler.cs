@@ -3,6 +3,7 @@ using FourkSP;
 using KSP.UI.Screens;
 using System;
 using System.Collections;
+using System.Reflection;
 using ToolbarControl_NS;
 using UnityEngine;
 using UnityEngine.UI;
@@ -34,7 +35,7 @@ namespace _4kSP_RnD
         private float _tmpMaxZoom;
         private float _tmpPartsScale;
         private bool _inRnD;
-
+        bool harmonyLoaded = false;
         void Start()
         {
             RDScalerConfig.Load();
@@ -48,7 +49,12 @@ namespace _4kSP_RnD
             GameEvents.onGUIRnDComplexDespawn.Add(OnRnDDespawn);
             GameEvents.OnGameSettingsApplied.Add(OnGameSettingsApplied);
 
-            AddToolbarButton();
+            harmonyLoaded = GetStaticBool(
+                    "4kSP-ModWindows",
+                    "_4kSP_ModWindows.ModWindowScalerHarmonyBootstrap",
+                    "harmonyLoaded");
+            if ( harmonyLoaded ) 
+                AddToolbarButton();
         }
 
         void OnDestroy()
@@ -65,6 +71,35 @@ namespace _4kSP_RnD
             }
         }
 
+
+        public static bool GetStaticBool(
+            string assemblyName,
+            string className,
+            string fieldName,
+            bool defaultValue = false)
+        {
+            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (assembly.GetName().Name != assemblyName)
+                    continue;
+
+                Type type = assembly.GetType(className);
+                if (type == null)
+                    return defaultValue;
+
+                FieldInfo field = type.GetField(
+                    fieldName,
+                    BindingFlags.Public |
+                    BindingFlags.Static);
+
+                if (field == null || field.FieldType != typeof(bool))
+                    return defaultValue;
+
+                return (bool)field.GetValue(null);
+            }
+
+            return defaultValue;
+        }
         // Fires when the player closes the Difficulty Settings dialog with
         // changes applied - including toggling "Enable R&D Scaler". Only
         // acts while actually inside the R&D complex; ApplyAll() itself
@@ -323,6 +358,9 @@ namespace _4kSP_RnD
         private bool _tmpKeepOnScreen;
         private bool _tmpLogWindows;
 
+        private bool _showDetected = true;
+        private Vector2 _detectedScroll;
+
 
         void OnToolbarTrue()
         {
@@ -359,7 +397,7 @@ namespace _4kSP_RnD
         String strLastTooltipText = "";
         //is it displayed and where
         Boolean blnToolTipDisplayed = false;
-        Rect rectToolTipPosition, finalToolTipPos;
+        Rect rectToolTipPosition; //, finalToolTipPos;
         Int32 intTooltipVertOffset = -30;
         Int32 intTooltipMaxWidth = 250;
         //timer so it only displays for a preriod of time
@@ -398,7 +436,7 @@ namespace _4kSP_RnD
                 Color[] colors = new Color[9 * 9];
                 for (int i = 0; i < colors.Length; i++)
                 {
-                    colors[i] = new Color(0.2f, 0.2f, 0.2f, 1f); 
+                    colors[i] = new Color(0.2f, 0.2f, 0.2f, 1f);
                 }
 
                 texTooltip.SetPixels(colors);
@@ -455,7 +493,7 @@ namespace _4kSP_RnD
 
         void OnGUI()
         {
-            if (!_windowShown) return;
+            if (!_windowShown || !harmonyLoaded) return;
             GUI.skin = HighLogic.Skin;
             _windowRect = ClickThruBlocker.GUILayoutWindow(
                 _windowId, _windowRect, DrawWindow, "4kSP Scaler");
@@ -582,9 +620,12 @@ namespace _4kSP_RnD
                     _tmpLogWindows = GUILayout.Toggle(_tmpLogWindows, new GUIContent(
                         "Log windows to KSP.log",
                         "Use this to find the assembly name for an OVERRIDE / exclude entry"));
-                    GUILayout.Space(20);
-                    GUILayout.Label("<i>Per-mod overrides and excludes are set in\n"
-                        + "GameData/4kSP/PluginData/ModWindowScaler.cfg</i>");
+
+                    GUILayout.Space(8);
+                    _showDetected = GUILayout.Toggle(_showDetected,
+                        "Detected mod windows (" + ModWindowScalerConfig.Detected.Count + ")");
+                    if (_showDetected)
+                        DrawDetectedMods();
                     break;
             }
 
@@ -637,6 +678,38 @@ namespace _4kSP_RnD
 
             GUI.DragWindow();
             SetTooltipText();
+        }
+
+        // One row per assembly seen opening a window this session (see
+        // ModWindowScalerConfig.TrackWindow), with a checkbox to exclude
+        // it. Toggling takes effect immediately (Overrides is read live by
+        // Patch_IMGUI_Window in 4kSP-ModWindows.dll); hit "Save" above to
+        // persist it to disk.
+        void DrawDetectedMods()
+        {
+            var detected = ModWindowScalerConfig.Detected;
+            if (detected.Count == 0)
+            {
+                GUILayout.Label("<i>No mod windows seen yet this session.</i>");
+                return;
+            }
+
+            _detectedScroll = GUILayout.BeginScrollView(_detectedScroll, GUILayout.Height(140));
+            for (int i = 0; i < detected.Count; i++)
+            {
+                var d = detected[i];
+                using (new GUILayout.HorizontalScope())
+                {
+                    bool excluded = ModWindowScalerConfig.IsExcluded(d.Assembly);
+                    bool newExcluded = GUILayout.Toggle(excluded, "Exclude");
+                    GUILayout.FlexibleSpace();
+                    if (newExcluded != excluded)
+                        ModWindowScalerConfig.SetExcluded(d.Assembly, newExcluded);
+
+                    GUILayout.Label(d.Assembly + "  (" + d.LastRequestedScale.ToString("0.##") + "x)");
+                }
+            }
+            GUILayout.EndScrollView();
         }
     }
 }

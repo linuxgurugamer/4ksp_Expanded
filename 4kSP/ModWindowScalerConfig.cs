@@ -9,9 +9,10 @@ namespace _4kSP_RnD
     // Persists the mod-window scaler settings to
     // GameData/4kSP/PluginData/ModWindowScaler.cfg using KSP's native
     // ConfigNode format. Follows the same Load()/Save() shape as
-    // RDScalerConfig (4kSP-RnD), including per-assembly overrides which
-    // don't map to a single slider and are edited by hand or from the log
-    // produced when LogWindows is enabled (see ModWindowScalerUI).
+    // RDScalerConfig (4kSP-RnD). Per-assembly overrides (exclude / custom
+    // scale) are managed from the "Detected mod windows" list in
+    // RDSceneScaler's "Mod Window Scaling" tab, or by hand-editing the cfg
+    // directly.
     public static class ModWindowScalerConfig
     {
         public const float DefaultScale = 1.5f;
@@ -28,6 +29,49 @@ namespace _4kSP_RnD
         // (the assembly's windows are left untouched).
         public static readonly Dictionary<string, float> Overrides =
             new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+
+        // Every assembly Patch_IMGUI_Window has actually seen open a
+        // window this session, in display order. Powers the "Detected mod
+        // windows" list in RDSceneScaler's "Mod Window Scaling" tab - same
+        // information LogWindows already printed to KSP.log, just tracked
+        // unconditionally instead of gated behind that toggle, and with a
+        // UI on top instead of a grep.
+        public sealed class DetectedMod
+        {
+            public string Assembly;
+            public float LastRequestedScale;
+        }
+
+        public static readonly List<DetectedMod> Detected = new List<DetectedMod>();
+        private static readonly Dictionary<string, DetectedMod> detectedByAssembly =
+            new Dictionary<string, DetectedMod>(StringComparer.OrdinalIgnoreCase);
+
+        public static void TrackWindow(string assemblyName, float requestedScale)
+        {
+            DetectedMod d;
+            if (!detectedByAssembly.TryGetValue(assemblyName, out d))
+            {
+                d = new DetectedMod { Assembly = assemblyName };
+                detectedByAssembly[assemblyName] = d;
+                Detected.Add(d);
+                Detected.Sort((a, b) => string.Compare(a.Assembly, b.Assembly, StringComparison.OrdinalIgnoreCase));
+            }
+            d.LastRequestedScale = requestedScale;
+        }
+
+        public static bool IsExcluded(string assemblyName)
+        {
+            float s;
+            return Overrides.TryGetValue(assemblyName, out s) && Mathf.Approximately(s, 1f);
+        }
+
+        public static void SetExcluded(string assemblyName, bool excluded)
+        {
+            if (excluded)
+                Overrides[assemblyName] = 1f;
+            else
+                Overrides.Remove(assemblyName);
+        }
 
         public static float CurrentScale()
         {
@@ -125,10 +169,15 @@ namespace _4kSP_RnD
             }
         }
 
-        // Writes current state to disk. Creates the folder if missing.
-        // Note: Overrides is intentionally NOT rewritten here, so hand
-        // edits / exclude comments in the file survive a Save() triggered
-        // from the settings window (which only touches the scalar fields).
+        // Writes current state to disk, including Overrides (exclude / per-
+        // mod scale). The "Detected mod windows" list is now the primary
+        // way to manage those, so this always fully regenerates the file
+        // from the in-memory state rather than trying to preserve whatever
+        // is on disk - simpler, and consistent with how the scalar fields
+        // already worked (a Save() from the window was already rewriting
+        // those unconditionally). Hand edits to OVERRIDE/exclude survive
+        // until the next Save() from the window, same as before; they're
+        // just no longer specially protected past that point.
         public static void Save()
         {
             try
@@ -138,38 +187,31 @@ namespace _4kSP_RnD
                 if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
                     Directory.CreateDirectory(dir);
 
-                ConfigNode root;
-                ConfigNode node;
-                if (File.Exists(path))
-                {
-                    // Preserve OVERRIDE / exclude entries and comments already
-                    // on disk; only the scalar fields are (re)written.
-                    root = ConfigNode.Load(path) ?? new ConfigNode();
-                    node = root.GetNode(ROOT);
-                    if (node == null)
-                    {
-                        node = root.AddNode(ROOT);
-                    }
-                    else
-                    {
-                        node.RemoveValues("enabled");
-                        node.RemoveValues("useStockUIScale");
-                        node.RemoveValues("scale");
-                        node.RemoveValues("keepOnScreen");
-                        node.RemoveValues("logWindows");
-                    }
-                }
-                else
-                {
-                    root = new ConfigNode();
-                    node = root.AddNode(ROOT);
-                }
+                ConfigNode root = new ConfigNode();
+                ConfigNode node = root.AddNode(ROOT);
 
                 node.AddValue("enabled", Enabled);
                 node.AddValue("useStockUIScale", UseStockUIScale);
                 node.AddValue("scale", Scale);
                 node.AddValue("keepOnScreen", KeepOnScreen);
                 node.AddValue("logWindows", LogWindows);
+
+                List<string> names = new List<string>(Overrides.Keys);
+                names.Sort(StringComparer.OrdinalIgnoreCase);
+                foreach (string name in names)
+                {
+                    float s = Overrides[name];
+                    if (Mathf.Approximately(s, 1f))
+                    {
+                        node.AddValue("exclude", name);
+                    }
+                    else
+                    {
+                        ConfigNode ov = node.AddNode("OVERRIDE");
+                        ov.AddValue("assembly", name);
+                        ov.AddValue("scale", s);
+                    }
+                }
 
                 root.Save(path);
             }
