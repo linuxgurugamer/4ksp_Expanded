@@ -1,5 +1,8 @@
 Changelog
 
+0.2.4.1
+	Added missing 4kSP-ModWindows.dll to the zip file
+
 0.2.4
 	Thanks to github user @Rjoande for this:
 		Add a "Detected mod windows" list to the "Mod Window Scaling" tab
