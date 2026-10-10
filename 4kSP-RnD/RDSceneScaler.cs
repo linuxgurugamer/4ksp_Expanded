@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 namespace _4kSP_RnD
 {
-    // One persistent settings window for map, R&D, and mod-window scaling.
+    // One persistent settings window for map, R&D, mod-window, and gizmo scaling.
     // R&D rendering changes are still applied only while its complex is open.
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class RDSceneScaler : MonoBehaviour
@@ -53,6 +53,7 @@ namespace _4kSP_RnD
             if (instance != this) return;
             RDScalerConfig.Load();
             ModWindowScalerConfig.Load();
+            GizmoScalerConfig.Load();
             ReadSettings();
 
             _windowId = UnityEngine.Random.Range(10000, 2000000) + GetType().Name.GetHashCode();
@@ -392,6 +393,10 @@ namespace _4kSP_RnD
         private float _tmpMapScale;
         private float _tmpMapIconSize;
         private float _tmpMapFontSize;
+        private bool _tmpGizmoEnabled;
+        private bool _tmpGizmoUseStock;
+        private float _tmpGizmoScale;
+        private bool _gizmoHarmonyLoaded;
 
         private bool _showDetected = true;
         private Vector2 _detectedScroll;
@@ -412,6 +417,9 @@ namespace _4kSP_RnD
             _tmpScale = ModWindowScalerConfig.Scale;
             _tmpKeepOnScreen = ModWindowScalerConfig.KeepOnScreen;
             _tmpLogWindows = ModWindowScalerConfig.LogWindows;
+            _tmpGizmoEnabled = GizmoScalerConfig.Enabled;
+            _tmpGizmoUseStock = GizmoScalerConfig.UseStockUIScale;
+            _tmpGizmoScale = GizmoScalerConfig.Scale;
             _mapGame = HighLogic.CurrentGame;
             if (_mapGame != null)
             {
@@ -423,6 +431,8 @@ namespace _4kSP_RnD
             }
             harmonyLoaded = GetStaticBool("4kSP-ModWindows",
                 "_4kSP_ModWindows.ModWindowScalerHarmonyBootstrap", "harmonyLoaded");
+            _gizmoHarmonyLoaded = GetStaticBool("4kSP-RnD",
+                "_4kSP_RnD.RDScalerHarmonyBootstrap", "harmonyLoaded");
         }
 
         void OnToolbarFalse()
@@ -441,6 +451,14 @@ namespace _4kSP_RnD
 
         void ApplyTmp()
         {
+            if (selectedTab == 3)
+            {
+                GizmoScalerConfig.Enabled = _tmpGizmoEnabled;
+                GizmoScalerConfig.UseStockUIScale = _tmpGizmoUseStock;
+                GizmoScalerConfig.Scale = _tmpGizmoScale;
+                return;
+            }
+
             RDScalerConfig.MaxZoom = _tmpMaxZoom;
             RDScalerConfig.PartsScale = _tmpPartsScale;
             if (_inRnD) ApplyAll();
@@ -611,7 +629,8 @@ namespace _4kSP_RnD
             {
                 "R & D Scaling",
                 "Mod Window Scaling",
-                "Map Icons & Labels"
+                "Map Icons & Labels",
+                "Gizmos"
             };
         private int selectedTab;
 
@@ -703,6 +722,9 @@ namespace _4kSP_RnD
                 case 2:
                     DrawMapSettings();
                     break;
+                case 3:
+                    DrawGizmoSettings();
+                    break;
             }
 
             DrawHorizontalLine(4);
@@ -717,8 +739,13 @@ namespace _4kSP_RnD
             if (GUILayout.Button("Save"))
             {
                 ApplyTmp();
-                RDScalerConfig.Save();
-                ModWindowScalerConfig.Save();
+                if (selectedTab == 3)
+                    GizmoScalerConfig.Save();
+                else
+                {
+                    RDScalerConfig.Save();
+                    ModWindowScalerConfig.Save();
+                }
             }
 
             if (GUILayout.Button("Default"))
@@ -743,6 +770,12 @@ namespace _4kSP_RnD
                         _tmpMapIconSize = 1f;
                         _tmpMapFontSize = 12f;
                         break;
+                    case 3:
+                        GizmoScalerConfig.ResetDefaults();
+                        _tmpGizmoEnabled = GizmoScalerConfig.Enabled;
+                        _tmpGizmoUseStock = GizmoScalerConfig.UseStockUIScale;
+                        _tmpGizmoScale = GizmoScalerConfig.Scale;
+                        break;
                 }
                 ApplyTmp();
             }
@@ -757,6 +790,21 @@ namespace _4kSP_RnD
 
             GUI.DragWindow();
             SetTooltipText();
+        }
+
+        private void DrawGizmoSettings()
+        {
+            GUILayout.Label("<color=yellow><b>Gizmo Scaling</b></color>");
+            if (!_gizmoHarmonyLoaded)
+                GUILayout.Label("<i>The gizmo scaler is not active. Settings remain editable.</i>");
+
+            _tmpGizmoEnabled = GUILayout.Toggle(_tmpGizmoEnabled, "Enabled");
+            _tmpGizmoUseStock = GUILayout.Toggle(_tmpGizmoUseStock,
+                new GUIContent("Use stock UI Scale", "Follow the stock UI scale for maneuver and editor translation/rotation gizmos."));
+            GUI.enabled = !_tmpGizmoUseStock;
+            DrawMapSlider("Scale", ref _tmpGizmoScale, GizmoScalerConfig.MinScale, GizmoScalerConfig.MaxScale);
+            GUI.enabled = true;
+            GUILayout.Label("<i>Apply updates existing gizmos. Settings are global, independent of the active save.</i>");
         }
 
         private void DrawMapSettings()
