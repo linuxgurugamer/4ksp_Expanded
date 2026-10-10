@@ -9,7 +9,7 @@ namespace FourkSP
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class RegisterToolbar2 : MonoBehaviour
     {
-        void Start()
+        void Awake()
         {
             ToolbarControl.RegisterMod(FourkSP.MODID, FourkSP.MODNAME);
         }
