@@ -44,6 +44,14 @@ uses the cursor's position in the scaled tree instead of mixing screen pixels
 with UI coordinates. Native zoom limits and edge clamping remain unchanged;
 at the viewport edges, clamping can still move the zoom focus.
 
+Tech tree nodes now follow the stock UI scale, including their icons, badges,
+selection highlights, and button targets. At 100% UI scale their native size
+is unchanged; higher scales enlarge them instead of leaving them at 100%.
+Authored tech-tree node scales and graph positions are preserved. Connector
+endpoints follow the resized nodes, including after live scaler toggles and
+UI-scale changes. Turning off **Enable R&D Scaler** restores native node sizing.
+The **Parts Scale** setting still controls only the separate parts-list tiles.
+
 The settings menu remains available without Harmony. The mod-window scaler
 retains the original implementation from master; no shared UI coordinate
 plane, call-site scanner, or KER parenting experiment is included.

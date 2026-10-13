@@ -184,6 +184,7 @@ namespace _4kSP_RnD
             }
             PatchZoomLimit();
             ScalePartsGrid();
+            RDTechTreeNodeScaler.Apply(RDController.Instance, true);
         }
 
         void PatchZoomLimit()
@@ -212,6 +213,7 @@ namespace _4kSP_RnD
         {
             var rd = RDController.Instance;
             if (rd == null) return;
+            RDTechTreeNodeScaler.Apply(rd, false);
 
             if (_baseZoomCached)
             {
