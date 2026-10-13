@@ -6,6 +6,7 @@ Unreleased
 	Preserve save-specific map settings and restore R&D geometry when leaving the complex
 	Keep the original master mod-window scaler; omit experimental coordinate interception and KER changes
 	Include the original ModWindows project in the release build
+	Fix R&D mouse-wheel zoom centering at non-100% stock UI scale using tree-local cursor coordinates
 
 0.2.4.1
 	Added missing 4kSP-ModWindows.dll to the zip file

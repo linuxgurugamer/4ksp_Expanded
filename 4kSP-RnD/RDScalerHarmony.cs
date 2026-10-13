@@ -1,6 +1,7 @@
 #if true
 using System;
 using HarmonyLib;
+using KSP.UI;
 using KSP.UI.Screens;
 using UnityEngine;
 
@@ -40,6 +41,32 @@ namespace _4kSP_RnD
             {
                 Debug.LogError(TAG + " PatchAll err: " + e);
             }
+        }
+    }
+
+    [HarmonyPatch(typeof(UIGridArea), "MousePointOnGrid")]
+    public static class Patch_RDGridArea_MousePointOnGrid
+    {
+        [HarmonyPrefix]
+        public static bool Prefix(UIGridArea __instance, ref Vector2 __result)
+        {
+            var rd = RDController.Instance;
+            if (rd == null || __instance != rd.gridArea || !RDSceneScaler.ScalerEnabled)
+                return true;
+
+            var ui = UIMasterController.Instance;
+            if (ui == null || ui.uiCamera == null || __instance.gridBackground == null)
+                return true;
+
+            Vector2 point;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                __instance.gridBackground, Input.mousePosition, ui.uiCamera, out point))
+                return true;
+
+            // Native Zoom expects the negative content-local cursor point.
+            // Transform conversion includes canvas scale, grid zoom, and pan.
+            __result = -point;
+            return false;
         }
     }
 

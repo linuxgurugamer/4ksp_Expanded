@@ -39,6 +39,11 @@ Map settings belong to the loaded save; load a save before editing them.
 R&D geometry changes apply only while its complex is open and are restored
 on exit. R&D and mod-window settings can be saved globally.
 
+With Harmony and **Enable R&D Scaler** enabled, mouse-wheel tech tree zoom
+uses the cursor's position in the scaled tree instead of mixing screen pixels
+with UI coordinates. Native zoom limits and edge clamping remain unchanged;
+at the viewport edges, clamping can still move the zoom focus.
+
 The settings menu remains available without Harmony. The mod-window scaler
 retains the original implementation from master; no shared UI coordinate
 plane, call-site scanner, or KER parenting experiment is included.
