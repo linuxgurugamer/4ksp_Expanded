@@ -11,6 +11,9 @@ Unreleased
 	Preserve native editor interpolation, dragging, snapping, and maneuver collapse animations
 	Save gizmo settings independently in GizmoScaler.cfg and restore native sizing when disabled
 	Read gizmo scale values using invariant culture to preserve fractional config values across locales
+  
+0.2.4.1
+	Added missing 4kSP-ModWindows.dll to the zip file
 
 0.2.4
 	Thanks to github user @Rjoande for this:
