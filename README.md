@@ -30,11 +30,32 @@ https://i.imgur.com/rf7YPdg.jpg
 
  
 
-There is a new button when in flight scene: https://i.imgur.com/ORofiqJ.png
+The **4kSP Expanded Settings** toolbar button is available in all scenes,
+including the main menu, flight, editor, tracking station, and R&D.
 
-Clicking it will open the following window in which you can adjust the sizes while on the map screen.:
+One persistent window contains **R&D Scaling**, **Mod Window Scaling**,
+**Map Icons & Labels**, and **Gizmos** tabs. Reopening displays the current
+applied values.
+Map settings belong to the loaded save; load a save before editing them.
+R&D geometry changes apply only while its complex is open and are restored
+on exit. R&D and mod-window settings can be saved globally.
 
-https://i.imgur.com/EEhimaT.png
+The settings menu remains available without Harmony. The mod-window scaler
+retains the original implementation from master; no shared UI coordinate
+plane, call-site scanner, or KER parenting experiment is included.
+
+The **Gizmos** tab controls maneuver handles and editor translation/rotation
+gizmos with one shared multiplier. By default it follows the stock UI scale
+live; turn off **Use stock UI Scale** to choose a manual scale from **0.5–3.0**.
+Turning off **Enabled** restores native sizing. **Apply** updates existing
+gizmos; editor gizmos retain their stock size interpolation.
+**Save** persists only gizmo settings to
+`GameData/4kSP/PluginData/GizmoScaler.cfg`, independently of the active save.
+
+Gizmo scaling requires Harmony. It uses targeted native gizmo hooks, not UI
+coordinate interception or scene scans. Stock dragging and snapping remain
+unchanged; maneuver dragging remains relative to the handle's displayed size,
+so enlarging it changes the delta-V produced by a fixed pixel drag.
 
 
 Availability

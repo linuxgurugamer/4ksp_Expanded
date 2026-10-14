@@ -1,5 +1,17 @@
 Changelog
 
+Unreleased
+	Provide one persistent, globally available settings menu for map, R&D, and mod-window scaling
+	Keep settings accessible without Harmony and show current applied values when reopening
+	Preserve save-specific map settings and restore R&D geometry when leaving the complex
+	Keep the original master mod-window scaler; omit experimental coordinate interception and KER changes
+	Include the original ModWindows project in the release build
+	Add a global Gizmos tab with one stock/manual multiplier for maneuver and editor translation/rotation gizmos
+	Scale fresh maneuver roots and native editor screen-size inputs without coordinate interception or scene scans
+	Preserve native editor interpolation, dragging, snapping, and maneuver collapse animations
+	Save gizmo settings independently in GizmoScaler.cfg and restore native sizing when disabled
+	Read gizmo scale values using invariant culture to preserve fractional config values across locales
+  
 0.2.4.1
 	Added missing 4kSP-ModWindows.dll to the zip file
 

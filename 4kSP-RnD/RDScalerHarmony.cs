@@ -20,7 +20,7 @@ namespace _4kSP_RnD
     {
         private const string HARMONY_ID = "com.fourksp.rdscaler";
         private const string TAG = "[4kSP-RD/Harmony]";
-        private static bool _patched;
+        public static bool harmonyLoaded;
 
         void Start()
         {
@@ -28,13 +28,15 @@ namespace _4kSP_RnD
             // ready before the user enters any scene.
             try { RDScalerConfig.Load(); }
             catch (Exception e) { Debug.LogError(TAG + " Load err: " + e); }
+            try { GizmoScalerConfig.Load(); }
+            catch (Exception e) { Debug.LogError(TAG + " Gizmo config load err: " + e); }
 
-            if (_patched) return;
+            if (harmonyLoaded) return;
             try
             {
                 var h = new Harmony(HARMONY_ID);
                 h.PatchAll(typeof(RDScalerHarmonyBootstrap).Assembly);
-                _patched = true;
+                harmonyLoaded = true;
             }
             catch (Exception e)
             {

@@ -1,9 +1,10 @@
 ## `GameData/4kSP/PluginData/ModWindowScaler.cfg`
 
-Controls the mod-window scaler (`4kSP-ModWindows.dll`). Plain text,
-reloaded on Save from the in-game window — no restart needed for hand
-edits either, just re-enter a scene (or reopen the mod window and hit
-"Apply").
+Controls the original mod-window scaler (`4kSP-ModWindows.dll`).
+Open the globally available **4kSP Expanded Settings** toolbar window and
+select **Mod Window Scaling**. Apply changes affect subsequent windows;
+Save also writes the global config. The file is loaded at startup, so restart
+KSP after hand edits. Reopening the menu does not reset applied values.
 
 ```
 MODWINDOWSCALER
