@@ -1,5 +1,9 @@
 Changelog
 
+Unreleased
+	Exclude Principia (including its error-dialog stub), MechJeb, KerbalEngineer, and KIS from additional window scaling by default
+	Use verified callback assembly owners in shipped and newly generated configs; preserve existing saved per-mod choices
+
 0.2.4
 	Thanks to github user @Rjoande for this:
 		Add a "Detected mod windows" list to the "Mod Window Scaling" tab
