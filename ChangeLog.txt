@@ -1,5 +1,15 @@
 Changelog
 
+Unreleased
+	Provide one persistent, globally available settings menu for map, R&D, and mod-window scaling
+	Keep settings accessible without Harmony and show current applied values when reopening
+	Preserve save-specific map settings and restore R&D geometry when leaving the complex
+	Keep the original master mod-window scaler; omit experimental coordinate interception and KER changes
+	Include the original ModWindows project in the release build
+	Fix R&D mouse-wheel zoom centering at non-100% stock UI scale using tree-local cursor coordinates
+	Make tech tree nodes inherit the missing initial stock UI scale without changing authored node scales or graph layout
+	Keep native connector endpoints aligned through node resizing, zoom, UI-scale changes, and live R&D scaler toggles
+
 0.2.4.1
 	Added missing 4kSP-ModWindows.dll to the zip file
 

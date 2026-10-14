@@ -10,23 +10,23 @@ using UnityEngine.UI;
 
 namespace _4kSP_RnD
 {
-    // Scales the R&D Complex UI for high-DPI monitors:
-    //   1) raises the tech tree zoom cap (UIGridArea.zoomMax)
-    //   2) scales the parts list tiles (RDPartList GridLayoutGroup)
-    [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
+    // One persistent settings window for map, R&D, and mod-window scaling.
+    // R&D rendering changes are still applied only while its complex is open.
+    [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class RDSceneScaler : MonoBehaviour
     {
         private const string TAG = "[4kSP-RD]";
 
         private const string TB_ICON_BIG = "4kSP/PluginData/4kSP-38";
         private const string TB_ICON_SMALL = "4kSP/PluginData/4kSP-24";
-        private const string TB_BTN_ID = "4kSPRDBtn";
-        private const string TB_TOOLTIP = "4kSP R&D Scaler";
+        private const string TB_BTN_ID = "4kSPBtn";
+        private const string TB_TOOLTIP = "4kSP Expanded Settings";
 
         private static readonly ApplicationLauncher.AppScenes TB_SCENES =
-            ApplicationLauncher.AppScenes.SPACECENTER;
+            ApplicationLauncher.AppScenes.ALWAYS;
 
         private ToolbarControl _toolbar;
+        private static RDSceneScaler instance;
         private GameObject _toolbarGO;
         private bool _windowShown;
         private int _windowId;
@@ -36,32 +36,44 @@ namespace _4kSP_RnD
         private float _tmpPartsScale;
         private bool _inRnD;
         bool harmonyLoaded = false;
+        private Coroutine _applyRoutine;
+
+        void Awake()
+        {
+            if (instance != null)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
         void Start()
         {
+            if (instance != this) return;
             RDScalerConfig.Load();
-
-            _tmpMaxZoom = RDScalerConfig.MaxZoom;
-            _tmpPartsScale = RDScalerConfig.PartsScale;
+            ModWindowScalerConfig.Load();
+            ReadSettings();
 
             _windowId = UnityEngine.Random.Range(10000, 2000000) + GetType().Name.GetHashCode();
 
             GameEvents.onGUIRnDComplexSpawn.Add(OnRnDSpawn);
             GameEvents.onGUIRnDComplexDespawn.Add(OnRnDDespawn);
             GameEvents.OnGameSettingsApplied.Add(OnGameSettingsApplied);
+            GameEvents.onGameSceneLoadRequested.Add(OnSceneLoadRequested);
 
-            harmonyLoaded = GetStaticBool(
-                    "4kSP-ModWindows",
-                    "_4kSP_ModWindows.ModWindowScalerHarmonyBootstrap",
-                    "harmonyLoaded");
-            if ( harmonyLoaded ) 
-                AddToolbarButton();
+            AddToolbarButton();
         }
 
         void OnDestroy()
         {
+            if (!ReferenceEquals(instance, this)) return;
             GameEvents.onGUIRnDComplexSpawn.Remove(OnRnDSpawn);
             GameEvents.onGUIRnDComplexDespawn.Remove(OnRnDDespawn);
             GameEvents.OnGameSettingsApplied.Remove(OnGameSettingsApplied);
+            GameEvents.onGameSceneLoadRequested.Remove(OnSceneLoadRequested);
+            if (ReferenceEquals(instance, this)) instance = null;
+            StopApplyRoutine();
 
             if (_toolbarGO != null)
             {
@@ -69,6 +81,19 @@ namespace _4kSP_RnD
                 _toolbarGO = null;
                 _toolbar = null;
             }
+        }
+
+        void OnSceneLoadRequested(GameScenes scene)
+        {
+            CloseWindow();
+            OnRnDDespawn();
+        }
+
+        private void StopApplyRoutine()
+        {
+            if (_applyRoutine == null) return;
+            StopCoroutine(_applyRoutine);
+            _applyRoutine = null;
         }
 
 
@@ -109,11 +134,8 @@ namespace _4kSP_RnD
             if (_inRnD) ApplyAll();
         }
 
-        // True unless the player turned the scaler off in Difficulty
-        // Settings (Section "4kSP" - see FourkSP._4kSP.rdScalerEnabled).
-        // Defaults to enabled if there's no active game yet, which in
-        // practice never happens here since this whole component only
-        // runs inside the R&D complex of a loaded save.
+        // The save's opt-out applies in R&D; global settings remain editable
+        // from other scenes, including before a save is loaded.
         internal static bool ScalerEnabled
         {
             get
@@ -127,12 +149,19 @@ namespace _4kSP_RnD
         void OnRnDSpawn()
         {
             _inRnD = true;
-            StartCoroutine(ApplyWhenReady());
+            StopApplyRoutine();
+            _baseZoomCached = false;
+            _baseGridCached = false;
+            _applyRoutine = StartCoroutine(ApplyWhenReady());
         }
 
         void OnRnDDespawn()
         {
+            if (_inRnD) ResetToStock();
             _inRnD = false;
+            StopApplyRoutine();
+            _baseZoomCached = false;
+            _baseGridCached = false;
         }
 
         IEnumerator ApplyWhenReady()
@@ -155,6 +184,7 @@ namespace _4kSP_RnD
             }
             PatchZoomLimit();
             ScalePartsGrid();
+            RDTechTreeNodeScaler.Apply(RDController.Instance, true);
         }
 
         void PatchZoomLimit()
@@ -183,6 +213,7 @@ namespace _4kSP_RnD
         {
             var rd = RDController.Instance;
             if (rd == null) return;
+            RDTechTreeNodeScaler.Apply(rd, false);
 
             if (_baseZoomCached)
             {
@@ -341,7 +372,8 @@ namespace _4kSP_RnD
         {
             if (_toolbar != null) return;
 
-            _toolbarGO = new GameObject("4kSPRDScalerToolbar");
+            _toolbarGO = new GameObject("4kSPSettingsToolbar");
+            _toolbarGO.transform.SetParent(transform, false);
             _toolbar = _toolbarGO.AddComponent<ToolbarControl>();
             _toolbar.AddToAllToolbars(
                 OnToolbarTrue, OnToolbarFalse,
@@ -357,6 +389,11 @@ namespace _4kSP_RnD
         private float _tmpScale;
         private bool _tmpKeepOnScreen;
         private bool _tmpLogWindows;
+        private Game _mapGame;
+        private bool _tmpMapUseStock;
+        private float _tmpMapScale;
+        private float _tmpMapIconSize;
+        private float _tmpMapFontSize;
 
         private bool _showDetected = true;
         private Vector2 _detectedScroll;
@@ -364,17 +401,30 @@ namespace _4kSP_RnD
 
         void OnToolbarTrue()
         {
+            ReadSettings();
+            _windowShown = true;
+        }
+
+        private void ReadSettings()
+        {
             _tmpMaxZoom = RDScalerConfig.MaxZoom;
             _tmpPartsScale = RDScalerConfig.PartsScale;
-            _windowShown = true;
-
-            ModWindowScalerConfig.Load();
             _tmpEnabled = ModWindowScalerConfig.Enabled;
             _tmpUseStock = ModWindowScalerConfig.UseStockUIScale;
             _tmpScale = ModWindowScalerConfig.Scale;
             _tmpKeepOnScreen = ModWindowScalerConfig.KeepOnScreen;
             _tmpLogWindows = ModWindowScalerConfig.LogWindows;
-
+            _mapGame = HighLogic.CurrentGame;
+            if (_mapGame != null)
+            {
+                var map = _mapGame.Parameters.CustomParams<_4kSP>();
+                _tmpMapUseStock = map.useStockUIScale;
+                _tmpMapScale = map.UI_Scale;
+                _tmpMapIconSize = map.UI_IconSize;
+                _tmpMapFontSize = map.UI_FontSize;
+            }
+            harmonyLoaded = GetStaticBool("4kSP-ModWindows",
+                "_4kSP_ModWindows.ModWindowScalerHarmonyBootstrap", "harmonyLoaded");
         }
 
         void OnToolbarFalse()
@@ -382,13 +432,34 @@ namespace _4kSP_RnD
             _windowShown = false;
         }
 
+        private void CloseWindow()
+        {
+            _windowShown = false;
+            blnToolTipDisplayed = false;
+            strToolTipText = "";
+            strLastTooltipText = "";
+            if (_toolbar != null) _toolbar.SetFalse(false);
+        }
+
         void ApplyTmp()
         {
+            RDScalerConfig.MaxZoom = _tmpMaxZoom;
+            RDScalerConfig.PartsScale = _tmpPartsScale;
+            if (_inRnD) ApplyAll();
             _4kSP_RnD.ModWindowScalerConfig.Enabled = _tmpEnabled;
             _4kSP_RnD.ModWindowScalerConfig.UseStockUIScale = _tmpUseStock;
             _4kSP_RnD.ModWindowScalerConfig.Scale = _tmpScale;
             _4kSP_RnD.ModWindowScalerConfig.KeepOnScreen = _tmpKeepOnScreen;
             _4kSP_RnD.ModWindowScalerConfig.LogWindows = _tmpLogWindows;
+            if (_mapGame != null && ReferenceEquals(_mapGame, HighLogic.CurrentGame))
+            {
+                var map = _mapGame.Parameters.CustomParams<_4kSP>();
+                map.useStockUIScale = _tmpMapUseStock;
+                map.UI_Scale = _tmpMapScale;
+                map.UI_IconSize = _tmpMapIconSize;
+                map.UI_FontSize = _tmpMapFontSize;
+                global::FourkSP.FourkSP.RefreshMapSettings();
+            }
         }
 
         //Tooltip variables
@@ -405,7 +476,7 @@ namespace _4kSP_RnD
 
         const float TOOLTIP_TIME = 5f;
         internal static GUIStyle styleTooltipStyle;
-        internal static Texture2D texTooltip = new Texture2D(9, 9, TextureFormat.ARGB32, false);
+        internal static Texture2D texTooltip;
 
         internal void SetTooltipText()
         {
@@ -433,6 +504,7 @@ namespace _4kSP_RnD
         {
             if (styleTooltipStyle == null)
             {
+                texTooltip = new Texture2D(9, 9, TextureFormat.ARGB32, false);
                 Color[] colors = new Color[9 * 9];
                 for (int i = 0; i < colors.Length; i++)
                 {
@@ -493,10 +565,10 @@ namespace _4kSP_RnD
 
         void OnGUI()
         {
-            if (!_windowShown || !harmonyLoaded) return;
+            if (!_windowShown) return;
             GUI.skin = HighLogic.Skin;
             _windowRect = ClickThruBlocker.GUILayoutWindow(
-                _windowId, _windowRect, DrawWindow, "4kSP Scaler");
+                _windowId, _windowRect, DrawWindow, "4kSP Expanded Settings");
             //if (settings.ShowTooltips)
             DrawToolTip();
 
@@ -540,7 +612,8 @@ namespace _4kSP_RnD
         private readonly string[] tabNames =
             {
                 "R & D Scaling",
-                "Mod Window Scaling"
+                "Mod Window Scaling",
+                "Map Icons & Labels"
             };
         private int selectedTab;
 
@@ -597,6 +670,8 @@ namespace _4kSP_RnD
 
                 case 1:
                     GUILayout.Label("<color=yellow><b>Mod Window Scaling</b></color>");
+                    if (!harmonyLoaded)
+                        GUILayout.Label("<i>The mod-window scaler is not active. Settings remain editable.</i>");
                     // Only flag the Difficulty Settings toggle specifically - if
                     // the checkbox right below is what's off, that's self-evident.
                     if (ModWindowScalerConfig.Enabled && !ModWindowScalerConfig.EffectiveEnabled)
@@ -627,6 +702,9 @@ namespace _4kSP_RnD
                     if (_showDetected)
                         DrawDetectedMods();
                     break;
+                case 2:
+                    DrawMapSettings();
+                    break;
             }
 
             DrawHorizontalLine(4);
@@ -636,41 +714,44 @@ namespace _4kSP_RnD
             GUILayout.FlexibleSpace();
             GUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("Apply"))
-            {
-                RDScalerConfig.MaxZoom = _tmpMaxZoom;
-                RDScalerConfig.PartsScale = _tmpPartsScale;
-                if (_inRnD) ApplyAll();
-                ApplyTmp();
-            }
+            if (GUILayout.Button("Apply")) ApplyTmp();
 
             if (GUILayout.Button("Save"))
             {
-                RDScalerConfig.MaxZoom = _tmpMaxZoom;
-                RDScalerConfig.PartsScale = _tmpPartsScale;
-                if (_inRnD) ApplyAll();
-                RDScalerConfig.Save();
-                ModWindowScalerConfig.Enabled = _tmpEnabled;
-                ModWindowScalerConfig.UseStockUIScale = _tmpUseStock;
-                ModWindowScalerConfig.Scale = _tmpScale;
-                ModWindowScalerConfig.KeepOnScreen = _tmpKeepOnScreen;
-                ModWindowScalerConfig.LogWindows = _tmpLogWindows;
-                ModWindowScalerConfig.Save();
                 ApplyTmp();
+                RDScalerConfig.Save();
+                ModWindowScalerConfig.Save();
             }
 
             if (GUILayout.Button("Default"))
             {
-                _tmpMaxZoom = RDScalerConfig.DefaultMaxZoom;
-                _tmpPartsScale = RDScalerConfig.DefaultPartsScale;
-                RDScalerConfig.ResetDefaults();
-                if (_inRnD) ApplyAll();
+                switch (selectedTab)
+                {
+                    case 0:
+                        _tmpMaxZoom = RDScalerConfig.DefaultMaxZoom;
+                        _tmpPartsScale = RDScalerConfig.DefaultPartsScale;
+                        break;
+                    case 1:
+                        ModWindowScalerConfig.ResetDefaults();
+                        _tmpEnabled = ModWindowScalerConfig.Enabled;
+                        _tmpUseStock = ModWindowScalerConfig.UseStockUIScale;
+                        _tmpScale = ModWindowScalerConfig.Scale;
+                        _tmpKeepOnScreen = ModWindowScalerConfig.KeepOnScreen;
+                        _tmpLogWindows = ModWindowScalerConfig.LogWindows;
+                        break;
+                    case 2:
+                        _tmpMapUseStock = true;
+                        _tmpMapScale = 1f;
+                        _tmpMapIconSize = 1f;
+                        _tmpMapFontSize = 12f;
+                        break;
+                }
+                ApplyTmp();
             }
 
             if (GUILayout.Button("Close"))
             {
-                _windowShown = false;
-                if (_toolbar != null) _toolbar.SetFalse(false);
+                CloseWindow();
             }
 
             GUILayout.EndHorizontal();
@@ -678,6 +759,31 @@ namespace _4kSP_RnD
 
             GUI.DragWindow();
             SetTooltipText();
+        }
+
+        private void DrawMapSettings()
+        {
+            if (_mapGame == null || !ReferenceEquals(_mapGame, HighLogic.CurrentGame))
+            {
+                GUILayout.Label("<i>Load a save to change its map icon and label settings.</i>");
+                return;
+            }
+            GUILayout.Label("<color=yellow><b>Map Icons & Labels</b></color>");
+            _tmpMapUseStock = GUILayout.Toggle(_tmpMapUseStock, "Use stock UI Scale for map icons and labels");
+            GUI.enabled = !_tmpMapUseStock;
+            DrawMapSlider("Overall UI Scale", ref _tmpMapScale, global::FourkSP.FourkSP.MinScale, global::FourkSP.FourkSP.MaxScale);
+            DrawMapSlider("Icon Size", ref _tmpMapIconSize, global::FourkSP.FourkSP.MinIconSize, global::FourkSP.FourkSP.MaxIconSize);
+            DrawMapSlider("Font Size", ref _tmpMapFontSize, global::FourkSP.FourkSP.MinFontSize, global::FourkSP.FourkSP.MaxFontSize);
+            GUI.enabled = true;
+            GUILayout.Label("<i>Apply updates the map immediately. These settings belong to the active save.</i>");
+        }
+
+        private static void DrawMapSlider(string label, ref float value, float minimum, float maximum)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label + ": " + value.ToString("F2"), GUILayout.Width(150));
+            value = GUILayout.HorizontalSlider(value, minimum, maximum, GUILayout.Width(180));
+            GUILayout.EndHorizontal();
         }
 
         // One row per assembly seen opening a window this session (see
