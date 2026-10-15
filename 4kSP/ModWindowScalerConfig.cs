@@ -27,8 +27,17 @@ namespace _4kSP_RnD
 
         // Per-assembly scale overrides. A value of 1 acts as an exclude
         // (the assembly's windows are left untouched).
+        // Fresh configs leave these mods' native scaling alone. Load replaces
+        // this list with the saved choices, so users can still opt back in.
         public static readonly Dictionary<string, float> Overrides =
-            new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+            new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "principia.ksp_plugin_adapter", 1f },
+                { "principia.ksp_plugin_adapter_stub", 1f },
+                { "MechJeb2", 1f },
+                { "KerbalEngineer", 1f },
+                { "KIS", 1f }
+            };
 
         // Every assembly Patch_IMGUI_Window has actually seen open a
         // window this session, in display order. Powers the "Detected mod
