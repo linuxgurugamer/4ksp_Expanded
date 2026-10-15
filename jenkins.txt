@@ -33,6 +33,7 @@
 # 2:PROJNAME, PROJFILE, VERSIONFILE, PLUGINSFOLDER
 2:4kSP,4kSP/4kSP.csproj,4kSP.version,GameData/4kSP/Plugins
 2:4kSP-RnD,4kSP-RnD/4kSP-RnD.csproj,4kSP.version,GameData/4kSP/Plugins
+2:4kSP-ModWindows,4kSP-ModWindows/4kSP-ModWindows.csproj,4kSP.version,GameData/4kSP/Plugins
 
 # 3:SOURCEFILE, DESTDIR
 3:4kSP.version,GameData/4kSP
